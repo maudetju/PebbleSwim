@@ -17,7 +17,7 @@ static TextLayer *s_textlayer_lap;
 static TextLayer *s_textlayer_time_text;
 static TextLayer *s_textlayer_dist_text;
 static TextLayer *s_textlayer_time;
-static TextLayer *s_textlayer_1;
+static TextLayer *s_textlayer_distance;
 
 static void initialise_ui(void) {
   s_window = window_create();
@@ -77,12 +77,12 @@ static void initialise_ui(void) {
   text_layer_set_font(s_textlayer_time, s_res_gothic_18_bold);
   layer_add_child(window_get_root_layer(s_window), (Layer *)s_textlayer_time);
   
-  // s_textlayer_1
-  s_textlayer_1 = text_layer_create(GRect(63, 122, 61, 20));
-  text_layer_set_text(s_textlayer_1, "0");
-  text_layer_set_text_alignment(s_textlayer_1, GTextAlignmentCenter);
-  text_layer_set_font(s_textlayer_1, s_res_gothic_18_bold);
-  layer_add_child(window_get_root_layer(s_window), (Layer *)s_textlayer_1);
+  // s_textlayer_distance
+  s_textlayer_distance = text_layer_create(GRect(63, 122, 61, 20));
+  text_layer_set_text(s_textlayer_distance, "0");
+  text_layer_set_text_alignment(s_textlayer_distance, GTextAlignmentCenter);
+  text_layer_set_font(s_textlayer_distance, s_res_gothic_18_bold);
+  layer_add_child(window_get_root_layer(s_window), (Layer *)s_textlayer_distance);
 }
 
 static void destroy_ui(void) {
@@ -94,7 +94,7 @@ static void destroy_ui(void) {
   text_layer_destroy(s_textlayer_time_text);
   text_layer_destroy(s_textlayer_dist_text);
   text_layer_destroy(s_textlayer_time);
-  text_layer_destroy(s_textlayer_1);
+  text_layer_destroy(s_textlayer_distance);
   gbitmap_destroy(s_res_resource_id_image_setup);
   gbitmap_destroy(s_res_resource_id_image_swim);
   gbitmap_destroy(s_res_resource_id_image_menu_line);
@@ -109,22 +109,36 @@ static void stop_activity(void);
 static void access_settings(void);
 static void reset_timer(void);
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed);
-static void reset_timer(void);
+static void increment_lap(void);
+static void update_lap_text(void);
 static void reset_lap(void);
+static void increment_timer(void);
+static void update_timer_text(void);
+static void reset_timer(void);
+static void update_distance(int distance);
+static void update_distance_text(void);
+static void reset_distance(void);
+static void reset_all_fields(void);
 
 enum ActivityStatus {Started, Paused, Stopped};
 
 static GBitmap *s_res_resource_id_image_pause;
 static GBitmap *s_res_resource_id_image_stop;
 static enum ActivityStatus activity_state = Stopped;
+static int s_pool_size = 25;
+static int s_lap = 0;
+static char s_lap_buffer[BUFFER_SIZE];
 static int s_timer = 0;
 static char s_timer_buffer[BUFFER_SIZE];
+static int s_distance = 0;
+static char s_distance_buffer[BUFFER_SIZE];
 
 static void initialise_data(void) {
   s_res_resource_id_image_pause = gbitmap_create_with_resource(RESOURCE_ID_RESOURCE_ID_IMAGE_PAUSE);
   s_res_resource_id_image_stop = gbitmap_create_with_resource(RESOURCE_ID_RESOURCE_ID_IMAGE_STOP);
 }
 
+/******************************** Manage activity states *********************************/
 static void start_activity(void) {
   // Update activity state
   activity_state = Started;
@@ -157,16 +171,28 @@ static void stop_activity(void) {
   action_bar_layer_set_icon(s_actionbarlayer, BUTTON_ID_SELECT, s_res_resource_id_image_swim);
   action_bar_layer_clear_icon(s_actionbarlayer, BUTTON_ID_DOWN);
   
+  // Unregister with TickTimerService
+  tick_timer_service_unsubscribe();
+  
   // Reset lap, timer and distance
+  reset_all_fields();
 }
 
 static void access_settings(void) {
-  
+  increment_lap();
 }
 
-static void reset_timer(void) {
-  s_timer = 0;
-  text_layer_set_text(s_textlayer_time, "00:00:00");
+/******************************** Manage fields *********************************/
+// LAP FIELD
+static void increment_lap(void) {
+  s_lap++;
+  update_distance(s_lap * s_pool_size);
+  update_lap_text();
+}
+
+static void update_lap_text(void) {
+  snprintf(s_lap_buffer, sizeof(s_lap_buffer), "%d", s_lap);
+  text_layer_set_text(s_textlayer_lap, s_lap_buffer);
 }
 
 static void reset_lap(void) {
@@ -174,9 +200,54 @@ static void reset_lap(void) {
   text_layer_set_text(s_textlayer_lap, "0");
 }
 
+// TIMER FIELD
+static void increment_timer(void) {
+  s_timer++;
+  update_timer_text();
+}
+
+static void update_timer_text(void) {
+  // Get time since launch
+  int seconds = s_timer % 60;
+  int minutes = (s_timer % 3600) / 60;
+  int hours = s_timer / 3600;
+  
+  // Format uptime to 00:00:00
+  char *format = malloc(BUFFER_SIZE);
+  format_uptime(&format, hours, minutes, seconds);
+  
+  // Update the TextLayer
+  snprintf(s_timer_buffer, sizeof(s_timer_buffer), format, hours, minutes, seconds);
+  text_layer_set_text(s_textlayer_time, s_timer_buffer);
+  
+  free(format);
+}
+
+static void reset_timer(void) {
+  s_timer = 0;
+  text_layer_set_text(s_textlayer_time, "00:00:00");
+}
+
+// DISTANCE FIELD
+static void update_distance(int distance) {
+  s_distance = distance;
+  update_distance_text();
+} 
+
+static void update_distance_text(void) {
+  snprintf(s_distance_buffer, sizeof(s_distance_buffer), "%d", s_distance);
+  text_layer_set_text(s_textlayer_distance, s_distance_buffer);
+}
+
 static void reset_distance(void) {
   s_distance = 0;
-  text_layer_set_text(s_textlayer_lap, "0");
+  text_layer_set_text(s_textlayer_distance, "0");
+}
+
+static void reset_all_fields(void) {
+  reset_timer();
+  reset_lap();
+  reset_distance();
 }
 
 /******************************** Manage clicks *********************************/
@@ -196,7 +267,7 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  if (activity_state == Paused) {
+  if (activity_state == Started || activity_state == Paused) {
     stop_activity();
   }
 }
@@ -206,27 +277,10 @@ static void click_config_provider(void *context) {
   window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
   window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
 }
-/********************************************************************************/
 
 /******************************** Manage timer **********************************/
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
-  // Increment s_uptime
-  s_timer++;
-  
-  // Get time since launch
-  int seconds = s_timer % 60;
-  int minutes = (s_timer % 3600) / 60;
-  int hours = s_timer / 3600;
-  
-  // Format uptime to 00:00:00
-  char *format = malloc(BUFFER_SIZE);
-  format_uptime(&format, hours, minutes, seconds);
-  
-  // Update the TextLayer
-  snprintf(s_timer_buffer, sizeof(s_timer_buffer), format, hours, minutes, seconds);
-  text_layer_set_text(s_textlayer_time, s_timer_buffer);
-  
-  free(format);
+  increment_timer();
 }
 /********************************************************************************/
 
