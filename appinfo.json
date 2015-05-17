@@ -9,6 +9,16 @@
     "resources": {
         "media": [
             {
+                "file": "images/stop.png",
+                "name": "RESOURCE_ID_IMAGE_STOP",
+                "type": "png"
+            },
+            {
+                "file": "images/pause.png",
+                "name": "RESOURCE_ID_IMAGE_PAUSE",
+                "type": "png"
+            },
+            {
                 "file": "images/menu_line.png",
                 "name": "RESOURCE_ID_IMAGE_MENU_LINE",
                 "type": "png"
