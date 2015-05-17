@@ -1,0 +1,36 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "maudetju@gmail.com",
+    "longName": "SwimTracker",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/menu_line.png",
+                "name": "RESOURCE_ID_IMAGE_MENU_LINE",
+                "type": "png"
+            },
+            {
+                "file": "images/setup.png",
+                "name": "RESOURCE_ID_IMAGE_SETUP",
+                "type": "png"
+            },
+            {
+                "file": "images/swim.png",
+                "name": "RESOURCE_ID_IMAGE_SWIM",
+                "type": "png"
+            }
+        ]
+    },
+    "sdkVersion": "2",
+    "shortName": "SwimTracker",
+    "uuid": "4ddcec04-0418-4fcd-ae73-e043c1fe85b2",
+    "versionCode": 1,
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
