@@ -179,7 +179,7 @@ static void stop_activity(void) {
 }
 
 static void access_settings(void) {
-  increment_lap();
+  
 }
 
 /******************************** Manage fields *********************************/
