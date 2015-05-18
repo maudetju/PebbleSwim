@@ -1,5 +1,7 @@
 #include "window_activity.h"
+  
 #include <pebble.h>
+#include "window_settings.h"
 #include "utils.h"
 
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
@@ -179,7 +181,7 @@ static void stop_activity(void) {
 }
 
 static void access_settings(void) {
-  
+  show_window_settings();
 }
 
 /******************************** Manage fields *********************************/
