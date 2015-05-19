@@ -12,7 +12,7 @@ void compass_callback(CompassHeadingData heading) {
 }
   
 static void init(void) {
-  compass_service_subscribe(compass_callback);
+  //compass_service_subscribe(compass_callback);
   //show_window_compass();
   show_window_activity();
 }
